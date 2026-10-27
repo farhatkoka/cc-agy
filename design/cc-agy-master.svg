@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%">
+  <title>cc-agy Logo: Escape Velocity Delta</title>
+  <defs>
+    <linearGradient id="vectorGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+  </defs>
+  <!-- Outer Antigravity Delta Frame with exact 60-degree equilateral geometry -->
+  <path d="M 128 45.72 L 224 212 L 176 212 L 128 128.86 L 80 212 L 32 212 Z
+           M 128 85 L 152 126.57 L 104 126.57 Z" 
+        fill="#F8FAFC" fill-rule="evenodd" />
+  <!-- Traversing Forward Agent Vector -->
+  <polygon points="108,180 156,180 172,164 156,148 108,148 124,164" 
+           fill="url(#vectorGrad)" />
+</svg>

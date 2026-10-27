@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%">
+  <title>cc-agy: Escape Velocity Delta</title>
+  <!-- Concept 3: Escape Velocity Delta (60 degree equilateral geometry) -->
+  <g fill="#000000" fill-rule="evenodd">
+    <!-- Outer Delta Frame with exact 60-degree angles -->
+    <path d="M 128 45.72 L 224 212 L 176 212 L 128 128.86 L 80 212 L 32 212 Z
+             M 128 85 L 152 126.57 L 104 126.57 Z" />
+    <!-- Dynamic Forward Agent Vector -->
+    <polygon points="108,180 156,180 172,164 156,148 108,148 124,164" />
+  </g>
+</svg>

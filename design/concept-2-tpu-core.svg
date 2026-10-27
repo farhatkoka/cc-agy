@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%">
+  <title>cc-agy: TPU Silicon Core</title>
+  <!-- Concept 2: TPU Silicon Die & Prompt Gateway -->
+  <g fill="#000000" fill-rule="evenodd">
+    <!-- Outer Octagonal TPU Silicon Die -->
+    <path d="M 96 32 L 160 32 L 224 96 L 224 160 L 160 224 L 96 224 L 32 160 L 32 96 Z
+             M 102 56 L 56 102 L 56 154 L 102 200 L 154 200 L 200 154 L 200 102 L 154 56 Z" />
+    <!-- Center Monolithic CLI Agent Core (Chevron + Cursor) -->
+    <path d="M 96 92 L 132 128 L 96 164 L 114 176 L 162 128 L 114 80 Z" />
+    <rect x="144" y="156" width="24" height="12" rx="2" />
+  </g>
+</svg>
