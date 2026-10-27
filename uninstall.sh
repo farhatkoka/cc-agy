@@ -56,4 +56,8 @@ if [ -f "${BASHRC}" ]; then
     sed -i '/# CC-AGY GATEWAY/,+5d' "${BASHRC}" 2>/dev/null || true
 fi
 
+# 4. Remove cc-agy CLI executable
+echo -e "    Removing ~/.local/bin/cc-agy..."
+rm -f "${HOME}/.local/bin/cc-agy"
+
 echo -e "${BOLD}${GREEN}[+] cc-agy gateway successfully uninstalled.${NC}"

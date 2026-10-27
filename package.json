@@ -1,0 +1,49 @@
+{
+  "name": "cc-agy",
+  "version": "1.0.0",
+  "description": "Decoupled Asymmetric Compute Gateway: Claude Code CLI + Google Antigravity (Gemini 3.8 Flash High) TPU compute at zero marginal token cost.",
+  "main": "bin/cc-agy.js",
+  "bin": {
+    "cc-agy": "./bin/cc-agy.js"
+  },
+  "scripts": {
+    "start": "node ./bin/cc-agy.js",
+    "doctor": "node ./bin/cc-agy.js doctor",
+    "status": "node ./bin/cc-agy.js status",
+    "restart": "node ./bin/cc-agy.js restart",
+    "setup": "bash ./install.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farhatkoka/cc-agy.git"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "antigravity",
+    "gemini",
+    "omniroute",
+    "ai",
+    "cli",
+    "tpu",
+    "gateway"
+  ],
+  "author": "Farhat Iqbal <https://github.com/farhatkoka>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/farhatkoka/cc-agy/issues"
+  },
+  "homepage": "https://github.com/farhatkoka/cc-agy#readme",
+  "files": [
+    "bin",
+    "scripts",
+    "systemd",
+    "install.sh",
+    "uninstall.sh",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

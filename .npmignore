@@ -1,0 +1,21 @@
+# Secrets, tokens, and credentials
+.env
+.env.*
+*.env
+*.token
+*token*
+*.key
+*.pem
+*.sqlite
+*.sqlite*
+
+# Logs and runtime
+logs/
+*.log
+npm-debug.log*
+
+# Git and OS
+.git
+.github
+.DS_Store
+Thumbs.db

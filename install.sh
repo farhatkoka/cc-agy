@@ -168,6 +168,12 @@ with open(settings_path, "w", encoding="utf-8") as f:
     json.dump(data, f, indent=2)
 ' "${LOCAL_API_KEY}"
 
+# Install self-healing cc-agy CLI executable
+mkdir -p "${HOME}/.local/bin"
+cp "${SCRIPT_DIR}/bin/cc-agy.js" "${HOME}/.local/bin/cc-agy"
+chmod +x "${HOME}/.local/bin/cc-agy"
+echo -e "${GREEN}[+] Self-healing 'cc-agy' CLI installed to ~/.local/bin/cc-agy${NC}"
+
 # Append idempotent block to ~/.bashrc if not present
 BASHRC="${HOME}/.bashrc"
 if [ -f "${BASHRC}" ]; then
@@ -190,4 +196,5 @@ echo -e "Primary Model  : ${BOLD}Gemini 3.8 Flash (High Reasoning)${NC}"
 echo -e "Fallback Models: ${BOLD}Claude Sonnet 4.6 -> Gemini 3.1 Flash Lite${NC}"
 echo -e "Daemon Service : ${BOLD}systemctl --user status omniroute${NC}"
 echo -e "Endpoint       : ${BOLD}http://localhost:20128/v1${NC}"
-echo -e "\nRun ${BOLD}'claude'${NC} anywhere in your terminal to begin coding."
+echo -e "CLI Command    : ${BOLD}cc-agy${NC} (or 'claude')"
+echo -e "\nRun ${BOLD}'cc-agy'${NC} anywhere in your terminal to begin coding."

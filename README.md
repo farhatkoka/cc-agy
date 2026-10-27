@@ -12,7 +12,9 @@
 ```mermaid
 flowchart TD
     subgraph Client["Developer Terminal"]
+        CLI["cc-agy CLI Wrapper (Self-Healing)"]
         CC["Claude Code CLI (claude)"]
+        CLI --> CC
     end
 
     subgraph LocalGateway["Localhost Reverse Proxy Gateway (:20128)"]
@@ -52,51 +54,66 @@ flowchart TD
 | **Outage / Reboot Loss** | Terminal-run proxies die on logout, crash, or reboot | Deploys a hardened `systemd --user` service with `Restart=always` (<3s resurrect). |
 | **Token Expiration** | Google OAuth tokens expire after 60 minutes | Automatically rotates tokens using the encrypted `refresh_token` stored in local SQLite. |
 | **Model Degradation** | Default setups trap the user on low-tier Flash Lite | Structures the priority cascade to lock in **Gemini 3.8 Flash (High Reasoning)** as primary. |
-| **Native Binary Bug** | `Error: claude native binary not installed` | Pre-installs `@anthropic-ai/claude-code-linux-x64` and triggers `install.cjs`. |
+| **Native Binary Bug** | `Error: claude native binary not installed` post-update | Dedicated `cc-agy` wrapper executes autonomous pre-flight ABI checks and self-heals unlinked binaries. |
 
 ---
 
 ## ⚡ Quick Start
 
 ### Prerequisites
-1. **Linux** (x86_64 or aarch64) with `systemd`, `node` (>=18), `npm`, and `python3`.
+1. **Linux** (Arch, Ubuntu/Debian, Fedora) with `systemd`, `node` (>=18), `npm`, and `python3`.
 2. **Google Antigravity CLI (`agy`)**: Authenticated with your Google account:
    ```bash
    agy
    ```
    *(Verify `~/.gemini/antigravity-cli/antigravity-oauth-token` exists).*
 
-### 1-Line Bootstrap
+### 1-Command Bootstrap via NPX
+```bash
+npx cc-agy
+```
+*Or install globally:*
+```bash
+npm install -g cc-agy
+cc-agy
+```
+
+### Alternative: Git Clone Bootstrap
 ```bash
 git clone https://github.com/farhatkoka/cc-agy.git
 cd cc-agy
 ./install.sh
 ```
 
-The bootstrap script will automatically:
-1. Verify host dependencies and native binary compatibility.
-2. Encrypt and provision your Antigravity credentials into local storage.
-3. Patch SQLite combo cascades (`compatFilterFailOpen` & Gemini 3.8 Flash High priority).
-4. Deploy and start `omniroute.service` via `systemctl --user`.
-5. Sync `~/.claude/settings.json` and shell environment variables.
+The installer will automatically:
+1. Verify host dependencies and Antigravity OAuth tokens.
+2. Install Claude Code and heal platform-native Linux binaries.
+3. Encrypt and provision your local Antigravity credentials into SQLite.
+4. Patch model cascade (`compatFilterFailOpen` & Gemini 3.8 Flash High priority).
+5. Deploy and start `omniroute.service` via `systemctl --user`.
+6. Install the self-healing `cc-agy` CLI into `~/.local/bin/cc-agy`.
 
 ---
 
-## 🔬 Live Verification
+## 🕹️ CLI Usage & Subcommands
 
-Test a non-interactive tool call through Claude Code:
-```bash
-claude -p "Check the kernel version using uname -r and report."
-```
+Once installed, use `cc-agy` directly from any terminal window:
 
-Inspect the live gateway service status:
 ```bash
-systemctl --user status omniroute
-```
+# Launch interactive Claude Code session
+cc-agy
 
-Check the health endpoint:
-```bash
-curl -s http://localhost:20128/api/monitoring/health
+# Bypass confirmation prompts (autonomous execution)
+cc-agy --dangerously-skip-permissions
+
+# Run non-interactive prompt / pipes
+cc-agy -p "Review src/index.ts for race conditions"
+
+# Run system diagnostic telemetry & health check
+cc-agy doctor
+
+# Restart local gateway daemon
+cc-agy restart
 ```
 
 ---
@@ -116,17 +133,18 @@ The `claude-auto` combo is tuned for maximum agentic power:
 
 ## 🧹 Uninstallation
 
-To restore your original Claude Code settings, disable the systemd daemon, and clean shell exports:
+To restore original Claude Code settings, disable the systemd daemon, and clean binaries:
 ```bash
 ./uninstall.sh
 ```
 
 ---
 
-## 🛡️ Security & Zero-Leakage Architecture
+## 🛡️ Security & Zero-Leakage Guarantee
 
-- **No Hardcoded Credentials:** `cc-agy` scripts never commit, store, or transmit API keys or OAuth tokens. Tokens are encrypted locally on your own workstation via AES-256-GCM using a host-generated key in `~/.omniroute/.env`.
-- **Local Loopback Only:** OmniRoute binds strictly to `127.0.0.1:20128` — never exposed to external network interfaces.
+- **Zero Credential Storage:** The package contains **executable logic only**. Exactly 0 bytes of tokens, keys, or personal identifiers are committed to Git or published to npm.
+- **Client-Side Encryption:** When executed, `cc-agy` discovers your *own* local Google token (`~/.gemini/.../antigravity-oauth-token`), generates a fresh random 256-bit encryption key on *your* machine, and encrypts credentials via AES-256-GCM.
+- **Loopback Enforcement:** OmniRoute binds strictly to `127.0.0.1:20128` — completely inaccessible from the outside network.
 
 ---
 
