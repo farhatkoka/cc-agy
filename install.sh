@@ -12,7 +12,18 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-.}")" 2>/dev/null && pwd || echo "")"
+if [ -z "${SCRIPT_DIR}" ] || [ ! -f "${SCRIPT_DIR}/scripts/import-agy.js" ]; then
+    INSTALL_CACHE="${HOME}/.local/share/cc-agy"
+    mkdir -p "${HOME}/.local/share"
+    if [ ! -d "${INSTALL_CACHE}/.git" ]; then
+        echo -e "${YELLOW}[*] Bootstrapping cc-agy asset cache into ~/.local/share/cc-agy...${NC}"
+        git clone --depth 1 https://github.com/farhatkoka/cc-agy.git "${INSTALL_CACHE}"
+    else
+        git -C "${INSTALL_CACHE}" pull --ff-only 2>/dev/null || true
+    fi
+    SCRIPT_DIR="${INSTALL_CACHE}"
+fi
 
 echo -e "${BOLD}${BLUE}====================================================================${NC}"
 echo -e "${BOLD}${BLUE}   cc-agy: Claude Code + Antigravity TPU Inference Gateway        ${NC}"
@@ -20,6 +31,7 @@ echo -e "${BOLD}${BLUE}=========================================================
 
 # 1. Dependency checks
 echo -e "${YELLOW}[1/6] Validating host dependencies...${NC}"
+command -v git >/dev/null 2>&1 || { echo -e "${RED}[-] git is required but not installed.${NC}"; exit 1; }
 command -v node >/dev/null 2>&1 || { echo -e "${RED}[-] Node.js is required but not installed.${NC}"; exit 1; }
 command -v npm >/dev/null 2>&1 || { echo -e "${RED}[-] npm is required but not installed.${NC}"; exit 1; }
 command -v python3 >/dev/null 2>&1 || { echo -e "${RED}[-] python3 is required but not installed.${NC}"; exit 1; }
@@ -83,7 +95,7 @@ fi
 
 # 4. Provision Antigravity Provider & Patch Combos
 echo -e "\n${YELLOW}[4/6] Encrypting credentials & patching SQLite combo cascades...${NC}"
-python3 "${SCRIPT_DIR}/scripts/import-agy.py"
+node "${SCRIPT_DIR}/scripts/import-agy.js"
 python3 "${SCRIPT_DIR}/scripts/patch-combo.py"
 
 # Resolve local API key from storage.sqlite
