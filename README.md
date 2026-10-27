@@ -72,15 +72,16 @@ flowchart TD
    ```
    *(Verify that `~/.gemini/antigravity-cli/antigravity-oauth-token` exists).*
 
-### 1-Line Remote Bootstrap (Recommended)
+### 1-Line Remote Bootstrap (Active & Recommended)
 ```bash
 curl -fsSL https://raw.githubusercontent.com/farhatkoka/cc-agy/main/install.sh | bash
 ```
 
-### Alternative: NPX Bootstrap
+### NPX One-Liner (npm Registry)
 ```bash
 npx cc-agy
 ```
+*(Note: Direct bootstrap via `curl | bash` is live and verified. The global npm package namespace goes public on October 30, 2026 at 11:42 UTC upon conclusion of the npm registry 72-hour 2FA cooldown window).*
 
 ### Alternative: Manual Git Clone
 ```bash
