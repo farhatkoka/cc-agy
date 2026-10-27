@@ -4,7 +4,7 @@
   "description": "Decoupled Asymmetric Compute Gateway: Claude Code CLI + Google Antigravity (Gemini 3.8 Flash High) TPU compute at zero marginal token cost.",
   "main": "bin/cc-agy.js",
   "bin": {
-    "cc-agy": "./bin/cc-agy.js"
+    "cc-agy": "bin/cc-agy.js"
   },
   "scripts": {
     "start": "node ./bin/cc-agy.js",
