@@ -147,38 +147,66 @@ for _ in {1..20}; do
 done
 
 # 6. Configure Claude Code Client & Shell Environment
-echo -e "\n${YELLOW}[6/6] Syncing Claude Code configuration...${NC}"
-mkdir -p "${HOME}/.claude"
-SETTINGS_FILE="${HOME}/.claude/settings.json"
+echo -e "\n${YELLOW}[6/6] Provisioning sandboxed Claude Code environment (~/.config/cc-agy/claude)...${NC}"
+CONFIG_CLAUDE_DIR="${HOME}/.config/cc-agy/claude"
+mkdir -p "${CONFIG_CLAUDE_DIR}/commands"
 
-python3 -c '
-import json, sys
-from pathlib import Path
+cat << EOF > "${CONFIG_CLAUDE_DIR}/settings.json"
+{
+  "\$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://localhost:20128",
+    "ANTHROPIC_AUTH_TOKEN": "${LOCAL_API_KEY}",
+    "ANTHROPIC_API_KEY": "",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_AUTOUPDATER_DISABLED_BY_HOST": "1",
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "190000"
+  },
+  "theme": "dark-daltonized",
+  "includeCoAuthoredBy": false
+}
+EOF
 
-settings_path = Path.home() / ".claude" / "settings.json"
-key = sys.argv[1]
+# Deploy custom slash commands: /switch and /model
+cat << 'EOF' > "${CONFIG_CLAUDE_DIR}/commands/switch.md"
+---
+name: switch
+description: Switch active Google Antigravity model (Gemini 3.8 Flash, Sonnet 4.6, Opus 4.6, GPT-OSS)
+command: true
+---
 
-data = {}
-if settings_path.exists():
-    try:
-        with open(settings_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except Exception:
-        data = {}
+# Antigravity Model Switch Command
 
-if "env" not in data or not isinstance(data["env"], dict):
-    data["env"] = {}
+Switch the active cognitive engine routed through the cc-agy gateway (:20128).
 
-data["$schema"] = "https://json.schemastore.org/claude-code-settings.json"
-data["env"]["ANTHROPIC_BASE_URL"] = "http://localhost:20128"
-data["env"]["ANTHROPIC_AUTH_TOKEN"] = key
-data["env"]["ANTHROPIC_API_KEY"] = ""
-data["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"] = "1"
-data["env"]["CLAUDE_CODE_AUTO_COMPACT_WINDOW"] = "190000"
+## Usage
+```bash
+/switch [flash | medium | low | sonnet | opus | gpt | auto]
+```
 
-with open(settings_path, "w", encoding="utf-8") as f:
-    json.dump(data, f, indent=2)
-' "${LOCAL_API_KEY}"
+## Implementation
+```bash
+cc-agy model $ARGUMENTS
+```
+EOF
+cp "${CONFIG_CLAUDE_DIR}/commands/switch.md" "${CONFIG_CLAUDE_DIR}/commands/model.md"
+sed -i 's/name: switch/name: model/' "${CONFIG_CLAUDE_DIR}/commands/model.md"
+
+# Deploy high-velocity system directives
+cat << 'EOF' > "${CONFIG_CLAUDE_DIR}/CLAUDE.md"
+# cc-agy System Directives
+
+## Compute Environment
+- **Inference Gateway:** Google Antigravity Cloud Code TPU v5p clusters (`daily-cloudcode-pa.googleapis.com`) via OmniRoute.
+- **Cognitive Engine:** Gemini 3.8 Flash (High Reasoning) / Claude Sonnet 4.6 on TPU.
+- **Operating Model:** Zero marginal token cost. High test-time compute enabled.
+
+## Engineering Standards
+- **Mechanical Precision:** Provide concrete, runnable code solutions rather than conceptual placeholders.
+- **Zero Fluff:** Omit decorative pleasantries, generic apologies, and excessive verbose summaries. Focus on mechanical truth, testable diffs, and deterministic execution.
+- **Idempotency:** Ensure all scripts, commands, and database operations are crash-safe and idempotent.
+EOF
+echo -e "${GREEN}[+] Sandboxed Claude Code profile provisioned (user's ~/.claude left untouched).${NC}"
 
 # Install self-healing cc-agy CLI executable
 mkdir -p "${HOME}/.local/bin"

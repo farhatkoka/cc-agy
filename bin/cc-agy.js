@@ -27,6 +27,9 @@ const CLAUDE_SETTINGS_PATH = path.join(HOME, '.claude', 'settings.json');
 const SYSTEMD_SERVICE_PATH = path.join(HOME, '.config', 'systemd', 'user', 'omniroute.service');
 const CONFIG_DIR = path.join(HOME, '.config', 'cc-agy');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
+const ISOLATED_CLAUDE_DIR = path.join(CONFIG_DIR, 'claude');
+const ISOLATED_SETTINGS_PATH = path.join(ISOLATED_CLAUDE_DIR, 'settings.json');
+const ISOLATED_COMMANDS_DIR = path.join(ISOLATED_CLAUDE_DIR, 'commands');
 const HEALTH_URL = 'http://127.0.0.1:20128/api/monitoring/health';
 
 const AGY_MODELS = [
@@ -184,6 +187,14 @@ async function ensureDaemonRunning() {
 }
 
 function getLocalApiKey() {
+  if (fs.existsSync(ISOLATED_SETTINGS_PATH)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(ISOLATED_SETTINGS_PATH, 'utf-8'));
+      if (data?.env?.ANTHROPIC_AUTH_TOKEN) {
+        return data.env.ANTHROPIC_AUTH_TOKEN;
+      }
+    } catch {}
+  }
   if (fs.existsSync(CLAUDE_SETTINGS_PATH)) {
     try {
       const data = JSON.parse(fs.readFileSync(CLAUDE_SETTINGS_PATH, 'utf-8'));
@@ -192,7 +203,80 @@ function getLocalApiKey() {
       }
     } catch {}
   }
+  const sqliteDb = path.join(HOME, '.omniroute', 'storage.sqlite');
+  if (fs.existsSync(sqliteDb)) {
+    try {
+      const res = spawnSync('sqlite3', [sqliteDb, 'SELECT key FROM api_keys LIMIT 1;'], { encoding: 'utf8' });
+      if (res.status === 0 && res.stdout.trim()) {
+        return res.stdout.trim().split('\n')[0].trim();
+      }
+    } catch {}
+  }
   return 'sk-omniroute-local';
+}
+
+function ensureIsolatedProfileConfigured(apiKey) {
+  try {
+    fs.mkdirSync(ISOLATED_COMMANDS_DIR, { recursive: true });
+
+    // 1. Isolated settings.json for Claude Code
+    const settings = {
+      $schema: 'https://json.schemastore.org/claude-code-settings.json',
+      env: {
+        ANTHROPIC_BASE_URL: 'http://localhost:20128',
+        ANTHROPIC_AUTH_TOKEN: apiKey,
+        ANTHROPIC_API_KEY: '',
+        DISABLE_AUTOUPDATER: '1',
+        CLAUDE_CODE_AUTOUPDATER_DISABLED_BY_HOST: '1',
+        CLAUDE_CODE_AUTO_COMPACT_WINDOW: '190000',
+      },
+      theme: 'dark-daltonized',
+      includeCoAuthoredBy: false,
+    };
+    fs.writeFileSync(ISOLATED_SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf8');
+
+    // 2. Custom slash commands: model.md and switch.md
+    const commandContent = `---
+name: switch
+description: Switch active Google Antigravity model (Gemini 3.8 Flash, Sonnet 4.6, Opus 4.6, GPT-OSS)
+command: true
+---
+
+# Antigravity Model Switch Command
+
+Switch the active cognitive engine routed through the cc-agy gateway (:20128).
+
+## Usage
+\`\`\`bash
+/switch [flash | medium | low | sonnet | opus | gpt | auto]
+\`\`\`
+
+## Implementation
+\`\`\`bash
+cc-agy model $ARGUMENTS
+\`\`\`
+`;
+    fs.writeFileSync(path.join(ISOLATED_COMMANDS_DIR, 'switch.md'), commandContent, 'utf8');
+    fs.writeFileSync(path.join(ISOLATED_COMMANDS_DIR, 'model.md'), commandContent.replace(/name: switch/g, 'name: model'), 'utf8');
+
+    // 3. High-velocity engineering directives (CLAUDE.md)
+    const claudeMdPath = path.join(ISOLATED_CLAUDE_DIR, 'CLAUDE.md');
+    if (!fs.existsSync(claudeMdPath)) {
+      const promptContent = `# cc-agy System Directives
+
+## Compute Environment
+- **Inference Gateway:** Google Antigravity Cloud Code TPU v5p clusters (\`daily-cloudcode-pa.googleapis.com\`) via OmniRoute.
+- **Cognitive Engine:** Gemini 3.8 Flash (High Reasoning) / Claude Sonnet 4.6 on TPU.
+- **Operating Model:** Zero marginal token cost. High test-time compute enabled.
+
+## Engineering Standards
+- **Mechanical Precision:** Provide concrete, runnable code solutions rather than conceptual placeholders.
+- **Zero Fluff:** Omit decorative pleasantries, generic apologies, and excessive verbose summaries. Focus on mechanical truth, testable diffs, and deterministic execution.
+- **Idempotency:** Ensure all scripts, commands, and database operations are crash-safe and idempotent.
+`;
+      fs.writeFileSync(claudeMdPath, promptContent, 'utf8');
+    }
+  } catch (err) {}
 }
 
 function runSetup() {
@@ -431,7 +515,7 @@ ${BOLD}EXAMPLES:${NC}
   }
 
   // Pre-flight setup check
-  const isSetup = fs.existsSync(SYSTEMD_SERVICE_PATH) && fs.existsSync(CLAUDE_SETTINGS_PATH);
+  const isSetup = fs.existsSync(SYSTEMD_SERVICE_PATH) && fs.existsSync(ISOLATED_SETTINGS_PATH);
   if (!isSetup) {
     if (!fs.existsSync(AGY_TOKEN_PATH)) {
       console.log(`${RED}[-] Antigravity OAuth token not found at: ${AGY_TOKEN_PATH}${NC}`);
@@ -476,15 +560,23 @@ ${BOLD}EXAMPLES:${NC}
   }
   forwardArgs.unshift('--model', selectedModelId);
 
-  // Inject gateway environment variables & disable broken background autoupdate
+  // Inject gateway environment variables & ensure isolated profile
   const apiKey = getLocalApiKey();
+  ensureIsolatedProfileConfigured(apiKey);
+
+  const resolved = resolveModel(selectedModelId) || { name: selectedModelId };
+  console.log(`${BOLD}${CYAN}▲ cc-agy${NC} ${DIM}v1.1.0 · Decoupled Antigravity Gateway${NC}`);
+  console.log(`  ${BOLD}Model:${NC}   ${GREEN}${resolved.name}${NC} (${selectedModelId})`);
+  console.log(`  ${BOLD}Cluster:${NC} Google Cloud TPU v5p ${DIM}(zero marginal token cost)${NC}`);
+  console.log(`  ${BOLD}Profile:${NC} ${DIM}Sandboxed (~/.config/cc-agy/claude)${NC}\n`);
+
   const env = {
     ...process.env,
+    CLAUDE_CONFIG_DIR: ISOLATED_CLAUDE_DIR,
     ANTHROPIC_BASE_URL: 'http://localhost:20128',
     ANTHROPIC_AUTH_TOKEN: apiKey,
     ANTHROPIC_API_KEY: '',
     ANTHROPIC_MODEL: selectedModelId,
-    CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: '1',
     DISABLE_AUTOUPDATER: '1',
     CLAUDE_CODE_AUTOUPDATER_DISABLED_BY_HOST: '1',
   };
