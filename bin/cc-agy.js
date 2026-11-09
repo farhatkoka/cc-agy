@@ -478,6 +478,17 @@ async function main() {
     process.exit(ok ? 0 : 1);
   }
 
+  if (command === 'uninstall') {
+    const uninstallScript = path.join(__dirname, '..', 'uninstall.sh');
+    if (fs.existsSync(uninstallScript)) {
+      const child = spawnSync('bash', [uninstallScript], { stdio: 'inherit' });
+      process.exit(child.status ?? 0);
+    } else {
+      const child = spawnSync('bash', ['-c', 'curl -fsSL https://raw.githubusercontent.com/farhatkoka/cc-agy/main/uninstall.sh | bash'], { stdio: 'inherit' });
+      process.exit(child.status ?? 0);
+    }
+  }
+
   if (command === 'update' || command === 'upgrade') {
     await handleUpdateCommand();
     return;
@@ -499,6 +510,7 @@ ${BOLD}USAGE:${NC}
   cc-agy doctor                      Run full diagnostic telemetry & healthcheck
   cc-agy restart                     Restart local proxy daemon
   cc-agy setup                       Force re-run provisioning and database patches
+  cc-agy uninstall                   Stop services, restore settings, and remove cc-agy
 
 ${BOLD}MODELS & ALIASES:${NC}
   flash / high                       Gemini 3.8 Flash High (Deep Reasoning)

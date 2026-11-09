@@ -146,8 +146,16 @@ The `claude-auto` combo routes requests through this hierarchy:
 
 ## Uninstallation
 
-To restore original Claude Code settings, disable the systemd daemon, and remove binaries:
+To restore original configurations, stop the background systemd daemon, and remove cc-agy:
+
 ```bash
+# Using the CLI directly:
+cc-agy uninstall
+
+# Or via 1-line curl (from anywhere):
+curl -fsSL https://raw.githubusercontent.com/farhatkoka/cc-agy/main/uninstall.sh | bash
+
+# Or from inside the cloned repository:
 ./uninstall.sh
 ```
 
