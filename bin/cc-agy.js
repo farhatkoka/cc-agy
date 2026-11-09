@@ -294,6 +294,78 @@ async function handleModelCommand(targetArg) {
   });
 }
 
+async function handleUpdateCommand() {
+  const pkgPath = path.join(__dirname, '..', 'package.json');
+  let pkg = { version: '1.1.0' };
+  try {
+    pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+  } catch (e) {}
+  const currentVersion = pkg.version;
+
+  console.log(`\n${BOLD}${CYAN}cc-agy Update Engine${NC}`);
+  console.log(`Current installed version: ${BOLD}v${currentVersion}${NC}`);
+
+  // Query registry for latest published version
+  let latestNpm = null;
+  try {
+    const res = spawnSync('npm', ['view', 'cc-agy', 'version'], { encoding: 'utf8' });
+    if (res.status === 0 && res.stdout) {
+      latestNpm = res.stdout.trim();
+    }
+  } catch (e) {}
+
+  if (latestNpm) {
+    console.log(`Latest registry version:  ${BOLD}v${latestNpm}${NC}`);
+  }
+
+  const isGitRepo = fs.existsSync(path.join(__dirname, '..', '.git'));
+
+  if (isGitRepo) {
+    console.log(`\n${DIM}Repository checkout detected (${path.resolve(__dirname, '..')})${NC}`);
+    console.log(`Syncing latest commits from GitHub origin/main...`);
+    const pull = spawnSync('git', ['pull', '--rebase', 'origin', 'main'], {
+      cwd: path.join(__dirname, '..'),
+      stdio: 'inherit',
+    });
+    if (pull.status !== 0) {
+      console.log(`\n${RED}✖ Git pull failed. Please check local git working tree.${NC}\n`);
+      process.exit(1);
+    }
+  } else {
+    console.log(`\nUpdating global npm package: ${BOLD}npm install -g cc-agy@latest${NC}...`);
+    const npmUp = spawnSync('npm', ['install', '-g', 'cc-agy@latest'], {
+      stdio: 'inherit',
+    });
+    if (npmUp.status !== 0) {
+      console.log(`\n${RED}✖ npm update failed.${NC}\n`);
+      process.exit(1);
+    }
+  }
+
+  // Synchronize database combos if omniroute is installed
+  const patchScript = path.join(__dirname, '..', 'scripts', 'patch-combo.py');
+  if (fs.existsSync(patchScript)) {
+    console.log(`\nSynchronizing Antigravity model combos in SQLite...`);
+    spawnSync('python3', [patchScript], { stdio: 'inherit' });
+  }
+
+  // Ensure native binary link for claude-code
+  ensureNativeBinaryHealthy();
+
+  // Restart proxy daemon if running
+  console.log(`Verifying gateway daemon status...`);
+  spawnSync('systemctl', ['--user', 'restart', 'omniroute.service'], { stdio: 'ignore' });
+
+  let updatedVersion = currentVersion;
+  try {
+    const updatedPkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    updatedVersion = updatedPkg.version;
+  } catch (e) {}
+
+  console.log(`\n${GREEN}✔ cc-agy is now at v${updatedVersion}!${NC}\n`);
+  process.exit(0);
+}
+
 async function main() {
   const args = [...process.argv.slice(2)];
   const command = args[0];
@@ -316,6 +388,11 @@ async function main() {
     process.exit(ok ? 0 : 1);
   }
 
+  if (command === 'update' || command === 'upgrade') {
+    await handleUpdateCommand();
+    return;
+  }
+
   if (command === 'model' || command === 'models' || command === 'switch') {
     await handleModelCommand(args[1]);
     return;
@@ -328,6 +405,7 @@ ${BOLD}cc-agy${NC} - Claude Code + Google Antigravity (Gemini 3.8 Flash High & C
 ${BOLD}USAGE:${NC}
   cc-agy [options] [claude-flags]   Launch Claude Code connected to Antigravity
   cc-agy model [alias]               Switch default active model (or show interactive menu)
+  cc-agy update                      Self-update to the latest version & sync model combos
   cc-agy doctor                      Run full diagnostic telemetry & healthcheck
   cc-agy restart                     Restart local proxy daemon
   cc-agy setup                       Force re-run provisioning and database patches

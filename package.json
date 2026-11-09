@@ -38,6 +38,7 @@
     "bin",
     "scripts",
     "systemd",
+    "assets",
     "install.sh",
     "uninstall.sh",
     "README.md",
