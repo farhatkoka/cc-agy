@@ -31,6 +31,11 @@ const ISOLATED_CLAUDE_DIR = path.join(CONFIG_DIR, 'claude');
 const ISOLATED_SETTINGS_PATH = path.join(ISOLATED_CLAUDE_DIR, 'settings.json');
 const ISOLATED_COMMANDS_DIR = path.join(ISOLATED_CLAUDE_DIR, 'commands');
 const HEALTH_URL = 'http://127.0.0.1:20128/api/monitoring/health';
+const PKG_PATH = path.join(__dirname, '..', 'package.json');
+let PKG_VERSION = '1.2.0';
+try {
+  PKG_VERSION = JSON.parse(fs.readFileSync(PKG_PATH, 'utf8')).version || '1.2.0';
+} catch {}
 
 const AGY_MODELS = [
   {
@@ -379,12 +384,11 @@ async function handleModelCommand(targetArg) {
 }
 
 async function handleUpdateCommand() {
-  const pkgPath = path.join(__dirname, '..', 'package.json');
-  let pkg = { version: '1.1.0' };
+  const pkgPath = PKG_PATH;
+  let currentVersion = PKG_VERSION;
   try {
-    pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    currentVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version;
   } catch (e) {}
-  const currentVersion = pkg.version;
 
   console.log(`\n${BOLD}${CYAN}cc-agy Update Engine${NC}`);
   console.log(`Current installed version: ${BOLD}v${currentVersion}${NC}`);
@@ -565,7 +569,7 @@ ${BOLD}EXAMPLES:${NC}
   ensureIsolatedProfileConfigured(apiKey);
 
   const resolved = resolveModel(selectedModelId) || { name: selectedModelId };
-  console.log(`${BOLD}${CYAN}▲ cc-agy${NC} ${DIM}v1.1.0 · Decoupled Antigravity Gateway${NC}`);
+  console.log(`${BOLD}${CYAN}▲ cc-agy${NC} ${DIM}v${PKG_VERSION} · Decoupled Antigravity Gateway${NC}`);
   console.log(`  ${BOLD}Model:${NC}   ${GREEN}${resolved.name}${NC} (${selectedModelId})`);
   console.log(`  ${BOLD}Cluster:${NC} Google Cloud TPU v5p ${DIM}(zero marginal token cost)${NC}`);
   console.log(`  ${BOLD}Profile:${NC} ${DIM}Sandboxed (~/.config/cc-agy/claude)${NC}\n`);

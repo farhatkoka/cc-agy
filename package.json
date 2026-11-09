@@ -1,6 +1,6 @@
 {
   "name": "cc-agy",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Decoupled Asymmetric Compute Gateway: Claude Code CLI + Google Antigravity (Gemini 3.8 Flash High) TPU compute at zero marginal token cost.",
   "main": "bin/cc-agy.js",
   "bin": {
