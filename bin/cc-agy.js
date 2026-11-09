@@ -249,7 +249,8 @@ command: true
 
 # Antigravity Model Switch Command
 
-Switch the active cognitive engine routed through the cc-agy gateway (:20128).
+Switch the active cognitive engine routed through the cc-agy gateway (:20128).  
+Architect: Farhat Iqbal (@farhatkoka) · https://github.com/farhatkoka/cc-agy
 
 ## Usage
 \`\`\`bash
@@ -326,7 +327,8 @@ async function runDoctor() {
   const cfg = loadConfig();
   const current = resolveModel(cfg.defaultModel) || AGY_MODELS[0];
   console.log(`[6] Active Cognitive Model   : ${BOLD}${CYAN}${current.name}${NC} (${current.id})`);
-  console.log(`[7] Token Billing / Cost     : ${GREEN}Asymmetric Zero Marginal Cost ($0 / token)${NC}\n`);
+  console.log(`[7] Token Billing / Cost     : ${GREEN}Asymmetric Zero Marginal Cost ($0 / token)${NC}`);
+  console.log(`[8] Project Repository       : ${CYAN}https://github.com/farhatkoka/cc-agy${NC} ${YELLOW}(★ Star on GitHub)${NC}\n`);
 }
 
 async function handleModelCommand(targetArg) {
@@ -572,7 +574,8 @@ ${BOLD}EXAMPLES:${NC}
   console.log(`${BOLD}${CYAN}▲ cc-agy${NC} ${DIM}v${PKG_VERSION} · Decoupled Antigravity Gateway${NC}`);
   console.log(`  ${BOLD}Model:${NC}   ${GREEN}${resolved.name}${NC} (${selectedModelId})`);
   console.log(`  ${BOLD}Cluster:${NC} Google Cloud TPU v5p ${DIM}(zero marginal token cost)${NC}`);
-  console.log(`  ${BOLD}Profile:${NC} ${DIM}Sandboxed (~/.config/cc-agy/claude)${NC}\n`);
+  console.log(`  ${BOLD}Profile:${NC} ${DIM}Sandboxed (~/.config/cc-agy/claude)${NC}`);
+  console.log(`  ${BOLD}GitHub:${NC}  ${DIM}https://github.com/farhatkoka/cc-agy${NC} ${YELLOW}★ Drop a star!${NC}\n`);
 
   const env = {
     ...process.env,
@@ -592,6 +595,8 @@ ${BOLD}EXAMPLES:${NC}
   });
 
   child.on('exit', (code, signal) => {
+    console.log(`\n${BOLD}${CYAN}▲ cc-agy${NC} ${DIM}· Thanks for coding with Antigravity TPU compute!${NC}`);
+    console.log(`  ${DIM}Saving $20+/day on API tokens? Star on GitHub:${NC} ${BOLD}https://github.com/farhatkoka/cc-agy${NC}\n`);
     if (signal) {
       process.kill(process.pid, signal);
     } else {

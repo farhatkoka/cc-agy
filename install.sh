@@ -237,4 +237,6 @@ echo -e "Fallback Models: ${BOLD}Claude Sonnet 4.6 -> Gemini 3.1 Flash Lite${NC}
 echo -e "Daemon Service : ${BOLD}systemctl --user status omniroute${NC}"
 echo -e "Endpoint       : ${BOLD}http://localhost:20128/v1${NC}"
 echo -e "CLI Command    : ${BOLD}cc-agy${NC} (or 'claude')"
+echo -e "\n${YELLOW}★ Saving $20+/day on Claude tokens? Drop a star on GitHub:${NC}"
+echo -e "  ${BOLD}https://github.com/farhatkoka/cc-agy${NC}"
 echo -e "\nRun ${BOLD}'cc-agy'${NC} anywhere in your terminal to begin coding."
