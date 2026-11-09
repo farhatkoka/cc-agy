@@ -125,15 +125,39 @@ if [ -z "${LOCAL_API_KEY}" ]; then
 fi
 echo -e "${GREEN}[+] Local API key provisioned and authorized.${NC}"
 
-# 5. Deploy Resilient Systemd Daemon
-echo -e "\n${YELLOW}[5/6] Deploying resilient systemd user service...${NC}"
-SYSTEMD_USER_DIR="${HOME}/.config/systemd/user"
-mkdir -p "${SYSTEMD_USER_DIR}"
-cp "${SCRIPT_DIR}/systemd/omniroute.service" "${SYSTEMD_USER_DIR}/omniroute.service"
+# 5. Deploy Resilient Gateway Daemon (Systemd with Process Fallback)
+HAS_SYSTEMD=false
+if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
+    HAS_SYSTEMD=true
+fi
 
-systemctl --user daemon-reload
-systemctl --user enable omniroute
-systemctl --user restart omniroute
+if [ "${HAS_SYSTEMD}" = "true" ]; then
+    echo -e "\n${YELLOW}[5/6] Deploying resilient systemd user service...${NC}"
+    SYSTEMD_USER_DIR="${HOME}/.config/systemd/user"
+    mkdir -p "${SYSTEMD_USER_DIR}"
+    cp "${SCRIPT_DIR}/systemd/omniroute.service" "${SYSTEMD_USER_DIR}/omniroute.service"
+
+    systemctl --user daemon-reload
+    systemctl --user enable omniroute
+    systemctl --user restart omniroute
+else
+    echo -e "\n${YELLOW}[5/6] Systemd user session unavailable (container/WSL). Deploying background process supervisor...${NC}"
+    OMNI_DIR="${HOME}/.omniroute"
+    mkdir -p "${OMNI_DIR}"
+    PID_FILE="${OMNI_DIR}/omniroute.pid"
+    if [ -f "${PID_FILE}" ]; then
+        kill -9 "$(cat "${PID_FILE}" 2>/dev/null)" 2>/dev/null || true
+        rm -f "${PID_FILE}"
+    fi
+    OMNI_BIN="$(command -v omniroute || true)"
+    if [ -n "${OMNI_BIN}" ]; then
+        nohup "${OMNI_BIN}" --port 20128 > "${OMNI_DIR}/omniroute.log" 2>&1 &
+        echo $! > "${PID_FILE}"
+    else
+        nohup npx omniroute --port 20128 > "${OMNI_DIR}/omniroute.log" 2>&1 &
+        echo $! > "${PID_FILE}"
+    fi
+fi
 
 # Wait for service health check
 echo -n "    Awaiting gateway readiness on http://127.0.0.1:20128"

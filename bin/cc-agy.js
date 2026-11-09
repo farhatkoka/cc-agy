@@ -25,6 +25,9 @@ const HOME = os.homedir();
 const AGY_TOKEN_PATH = path.join(HOME, '.gemini', 'antigravity-cli', 'antigravity-oauth-token');
 const CLAUDE_SETTINGS_PATH = path.join(HOME, '.claude', 'settings.json');
 const SYSTEMD_SERVICE_PATH = path.join(HOME, '.config', 'systemd', 'user', 'omniroute.service');
+const PID_DIR = path.join(HOME, '.omniroute');
+const PID_FILE = path.join(PID_DIR, 'omniroute.pid');
+const LOG_FILE = path.join(PID_DIR, 'omniroute.log');
 const CONFIG_DIR = path.join(HOME, '.config', 'cc-agy');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const ISOLATED_CLAUDE_DIR = path.join(CONFIG_DIR, 'claude');
@@ -171,23 +174,88 @@ function ensureNativeBinaryHealthy() {
   }
 }
 
+function hasSystemd() {
+  try {
+    const res = spawnSync('systemctl', ['--user', 'show-environment'], { stdio: 'ignore' });
+    return res.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+function isPidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function startProcessSupervisor() {
+  try {
+    fs.mkdirSync(PID_DIR, { recursive: true });
+    if (fs.existsSync(PID_FILE)) {
+      try {
+        const oldPid = parseInt(fs.readFileSync(PID_FILE, 'utf8').trim(), 10);
+        if (oldPid && isPidAlive(oldPid)) {
+          process.kill(oldPid, 'SIGTERM');
+        }
+      } catch {}
+      try { fs.unlinkSync(PID_FILE); } catch {}
+    }
+
+    const out = fs.openSync(LOG_FILE, 'a');
+    let omniBin = 'omniroute';
+    try {
+      const whichRes = spawnSync('which', ['omniroute'], { encoding: 'utf8' });
+      if (whichRes.status === 0 && whichRes.stdout?.trim()) {
+        omniBin = whichRes.stdout.trim();
+      }
+    } catch {}
+
+    const child = spawn(omniBin, ['--port', '20128'], {
+      detached: true,
+      stdio: ['ignore', out, out]
+    });
+    child.unref();
+    if (child.pid) {
+      fs.writeFileSync(PID_FILE, String(child.pid), 'utf8');
+      return true;
+    }
+  } catch (err) {}
+  return false;
+}
+
 async function ensureDaemonRunning() {
   const isHealthy = await checkHealth(1000);
   if (isHealthy) return true;
 
-  process.stdout.write(`${YELLOW}⚡ [cc-agy] Gateway daemon inactive. Resurrecting omniroute.service...${NC} `);
-  try {
-    spawnSync('systemctl', ['--user', 'start', 'omniroute'], { encoding: 'utf-8' });
-    for (let i = 0; i < 10; i++) {
+  if (hasSystemd()) {
+    process.stdout.write(`${YELLOW}⚡ [cc-agy] Gateway daemon inactive. Resurrecting omniroute.service...${NC} `);
+    try {
+      spawnSync('systemctl', ['--user', 'start', 'omniroute'], { encoding: 'utf-8' });
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 400));
+        if (await checkHealth(500)) {
+          console.log(`${GREEN}✔ Gateway ready (:20128).${NC}`);
+          return true;
+        }
+      }
+    } catch (e) {}
+  } else {
+    process.stdout.write(`${YELLOW}⚡ [cc-agy] Systemd session unavailable. Launching background supervisor...${NC} `);
+    startProcessSupervisor();
+    for (let i = 0; i < 15; i++) {
       await new Promise(r => setTimeout(r, 400));
       if (await checkHealth(500)) {
         console.log(`${GREEN}✔ Gateway ready (:20128).${NC}`);
         return true;
       }
     }
-  } catch (e) {}
+  }
 
-  console.log(`${RED}✖ Failed to start omniroute.service.${NC}`);
+  console.log(`${RED}✖ Failed to start OmniRoute gateway.${NC}`);
   return false;
 }
 
@@ -305,8 +373,19 @@ async function runDoctor() {
   const hasToken = fs.existsSync(AGY_TOKEN_PATH);
   console.log(`[1] Google Antigravity Token : ${hasToken ? `${GREEN}✔ Present (${AGY_TOKEN_PATH})${NC}` : `${RED}✖ Missing. Run 'agy' to sign in.${NC}`}`);
 
-  const serviceActive = spawnSync('systemctl', ['--user', 'is-active', 'omniroute'], { encoding: 'utf-8' }).stdout?.trim() === 'active';
-  console.log(`[2] OmniRoute User Daemon     : ${serviceActive ? `${GREEN}✔ active (systemd --user)${NC}` : `${YELLOW}⚠ inactive / not running${NC}`}`);
+  let serviceStatus = `${YELLOW}⚠ inactive / not running${NC}`;
+  if (hasSystemd()) {
+    const serviceActive = spawnSync('systemctl', ['--user', 'is-active', 'omniroute'], { encoding: 'utf-8' }).stdout?.trim() === 'active';
+    serviceStatus = serviceActive ? `${GREEN}✔ active (systemd --user)${NC}` : `${YELLOW}⚠ inactive / not running${NC}`;
+  } else if (fs.existsSync(PID_FILE)) {
+    try {
+      const pid = parseInt(fs.readFileSync(PID_FILE, 'utf8').trim(), 10);
+      if (pid && isPidAlive(pid)) {
+        serviceStatus = `${GREEN}✔ active (PID ${pid}, process supervisor)${NC}`;
+      }
+    } catch {}
+  }
+  console.log(`[2] OmniRoute Gateway Daemon : ${serviceStatus}`);
 
   const healthy = await checkHealth(2000);
   console.log(`[3] Gateway Health Endpoint  : ${healthy ? `${GREEN}✔ http://127.0.0.1:20128 (healthy)${NC}` : `${RED}✖ Unreachable${NC}`}`);
@@ -444,7 +523,11 @@ async function handleUpdateCommand() {
 
   // Restart proxy daemon if running
   console.log(`Verifying gateway daemon status...`);
-  spawnSync('systemctl', ['--user', 'restart', 'omniroute.service'], { stdio: 'ignore' });
+  if (hasSystemd()) {
+    spawnSync('systemctl', ['--user', 'restart', 'omniroute.service'], { stdio: 'ignore' });
+  } else {
+    startProcessSupervisor();
+  }
 
   let updatedVersion = currentVersion;
   try {
@@ -466,8 +549,13 @@ async function main() {
   }
 
   if (command === 'restart') {
-    process.stdout.write(`${YELLOW}Restarting omniroute.service...${NC} `);
-    spawnSync('systemctl', ['--user', 'restart', 'omniroute'], { encoding: 'utf-8' });
+    if (hasSystemd()) {
+      process.stdout.write(`${YELLOW}Restarting omniroute.service...${NC} `);
+      spawnSync('systemctl', ['--user', 'restart', 'omniroute'], { encoding: 'utf-8' });
+    } else {
+      process.stdout.write(`${YELLOW}Restarting omniroute process supervisor...${NC} `);
+      startProcessSupervisor();
+    }
     const ok = await checkHealth(3000);
     console.log(ok ? `${GREEN}✔ Gateway restarted & healthy.${NC}` : `${RED}✖ Failed.${NC}`);
     process.exit(ok ? 0 : 1);
@@ -532,8 +620,9 @@ ${BOLD}EXAMPLES:${NC}
     process.exit(0);
   }
 
-  // Pre-flight setup check
-  const isSetup = fs.existsSync(SYSTEMD_SERVICE_PATH) && fs.existsSync(ISOLATED_SETTINGS_PATH);
+  // Pre-flight setup check: verify isolated profile and daemon config
+  const hasDaemonConfig = hasSystemd() ? fs.existsSync(SYSTEMD_SERVICE_PATH) : true;
+  const isSetup = hasDaemonConfig && fs.existsSync(ISOLATED_SETTINGS_PATH);
   if (!isSetup) {
     if (!fs.existsSync(AGY_TOKEN_PATH)) {
       console.log(`${RED}[-] Antigravity OAuth token not found at: ${AGY_TOKEN_PATH}${NC}`);

@@ -13,19 +13,32 @@ NC='\033[0m'
 
 echo -e "${BOLD}${YELLOW}Uninstalling cc-agy Gateway...${NC}"
 
-# 1. Stop and disable systemd service
-if systemctl --user is-active --quiet omniroute 2>/dev/null; then
-    echo -e "    Stopping omniroute systemd user service..."
-    systemctl --user stop omniroute 2>/dev/null || true
+# 1. Stop and disable systemd service (if systemd is present)
+if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
+    if systemctl --user is-active --quiet omniroute 2>/dev/null; then
+        echo -e "    Stopping omniroute systemd user service..."
+        systemctl --user stop omniroute 2>/dev/null || true
+    fi
+
+    if systemctl --user is-enabled --quiet omniroute 2>/dev/null; then
+        echo -e "    Disabling omniroute systemd user service..."
+        systemctl --user disable omniroute 2>/dev/null || true
+    fi
+
+    rm -f "${HOME}/.config/systemd/user/omniroute.service"
+    systemctl --user daemon-reload 2>/dev/null || true
 fi
 
-if systemctl --user is-enabled --quiet omniroute 2>/dev/null; then
-    echo -e "    Disabling omniroute systemd user service..."
-    systemctl --user disable omniroute 2>/dev/null || true
+# Stop any background process supervisor
+PID_FILE="${HOME}/.omniroute/omniroute.pid"
+if [ -f "${PID_FILE}" ]; then
+    echo -e "    Terminating background omniroute process..."
+    OLD_PID="$(cat "${PID_FILE}" 2>/dev/null || true)"
+    if [ -n "${OLD_PID}" ]; then
+        kill -15 "${OLD_PID}" 2>/dev/null || kill -9 "${OLD_PID}" 2>/dev/null || true
+    fi
+    rm -f "${PID_FILE}"
 fi
-
-rm -f "${HOME}/.config/systemd/user/omniroute.service"
-systemctl --user daemon-reload
 
 # 2. Clean ~/.claude/settings.json
 SETTINGS_FILE="${HOME}/.claude/settings.json"
