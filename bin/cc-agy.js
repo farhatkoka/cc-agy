@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * cc-agy: Autonomous Self-Healing CLI Wrapper & Gateway Controller
- * Seamlessly connects Claude Code to Google Antigravity (Gemini 3.8 Flash High)
+ * Seamlessly connects Claude Code to Google Antigravity (Gemini 3.8 Flash High & Claude on TPU)
  * Author: Farhat Iqbal (@farhatkoka)
  */
 
@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const http = require('http');
+const readline = require('readline');
 
 const BOLD = '\x1b[1m';
 const GREEN = '\x1b[32m';
@@ -17,13 +18,89 @@ const BLUE = '\x1b[34m';
 const YELLOW = '\x1b[33m';
 const RED = '\x1b[31m';
 const CYAN = '\x1b[36m';
+const DIM = '\x1b[2m';
 const NC = '\x1b[0m';
 
 const HOME = os.homedir();
 const AGY_TOKEN_PATH = path.join(HOME, '.gemini', 'antigravity-cli', 'antigravity-oauth-token');
 const CLAUDE_SETTINGS_PATH = path.join(HOME, '.claude', 'settings.json');
 const SYSTEMD_SERVICE_PATH = path.join(HOME, '.config', 'systemd', 'user', 'omniroute.service');
+const CONFIG_DIR = path.join(HOME, '.config', 'cc-agy');
+const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const HEALTH_URL = 'http://127.0.0.1:20128/api/monitoring/health';
+
+const AGY_MODELS = [
+  {
+    id: 'gemini-3.8-flash-high',
+    name: 'Gemini 3.8 Flash High',
+    description: 'Google Deep Thinking (TPU v5p Reasoning Engine)',
+    aliases: ['1', 'flash', 'high', 'flash-high', 'gemini']
+  },
+  {
+    id: 'gemini-3.8-flash-medium',
+    name: 'Gemini 3.8 Flash Medium',
+    description: 'Balanced latency & test-time reasoning',
+    aliases: ['2', 'medium', 'med', 'flash-medium']
+  },
+  {
+    id: 'gemini-3.8-flash-low',
+    name: 'Gemini 3.8 Flash Low',
+    description: 'Distilled sub-second speed',
+    aliases: ['3', 'low', 'flash-low']
+  },
+  {
+    id: 'claude-sonnet-4-6',
+    name: 'Claude Sonnet 4.6 (Thinking)',
+    description: 'Anthropic flagship agentic reasoning on TPU',
+    aliases: ['4', 'sonnet', 'sonnet-4-6']
+  },
+  {
+    id: 'claude-opus-4-6-thinking',
+    name: 'Claude Opus 4.6 (Thinking)',
+    description: 'Anthropic maximum depth reasoning',
+    aliases: ['5', 'opus', 'opus-4-6', 'opus-thinking']
+  },
+  {
+    id: 'gpt-oss-120b-medium',
+    name: 'GPT-OSS 120B (Medium)',
+    description: 'Open-weights high-density reasoning',
+    aliases: ['6', 'gpt', 'oss', '120b']
+  },
+  {
+    id: 'claude-auto',
+    name: 'Claude-Auto Priority Cascade',
+    description: 'Dynamic failover: Flash High -> Sonnet 4.6 -> Flash Lite',
+    aliases: ['7', 'auto', 'cascade', 'default']
+  }
+];
+
+function loadConfig() {
+  try {
+    if (fs.existsSync(CONFIG_PATH)) {
+      return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    }
+  } catch {}
+  return { defaultModel: 'gemini-3.8-flash-high' };
+}
+
+function saveConfig(cfg) {
+  try {
+    fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), 'utf8');
+  } catch (err) {
+    console.error(`${RED}[-] Failed to persist config:${NC}`, err.message);
+  }
+}
+
+function resolveModel(query) {
+  if (!query) return null;
+  const q = query.trim().toLowerCase();
+  for (const m of AGY_MODELS) {
+    if (m.id.toLowerCase() === q) return m;
+    if (m.aliases.includes(q)) return m;
+  }
+  return null;
+}
 
 function checkHealth(timeoutMs = 1500) {
   return new Promise((resolve) => {
@@ -58,7 +135,12 @@ function healNativeBinary() {
 
   for (const scriptPath of possiblePaths) {
     if (fs.existsSync(scriptPath)) {
-      process.stdout.write(`${YELLOW}⚡ [cc-agy] Re-linking platform native ELF binary...${NC} `);
+      // Purge any conflicting nested platform package to prevent 'Two copies installed' error
+      const nestedPkg = path.join(path.dirname(scriptPath), 'node_modules', '@anthropic-ai', 'claude-code-linux-x64');
+      if (fs.existsSync(nestedPkg)) {
+        try { fs.rmSync(nestedPkg, { recursive: true, force: true }); } catch {}
+      }
+      process.stdout.write(`${YELLOW}⚡ [cc-agy] Linking platform native ELF binary...${NC} `);
       const res = spawnSync('node', [scriptPath], { encoding: 'utf-8' });
       if (res.status === 0) {
         console.log(`${GREEN}✔ Done.${NC}`);
@@ -130,19 +212,15 @@ async function runDoctor() {
   console.log(`${BOLD}${CYAN}   cc-agy: System Architecture & Diagnostic Telemetry             ${NC}`);
   console.log(`${BOLD}${CYAN}====================================================================${NC}\n`);
 
-  // 1. Antigravity OAuth Token
   const hasToken = fs.existsSync(AGY_TOKEN_PATH);
   console.log(`[1] Google Antigravity Token : ${hasToken ? `${GREEN}✔ Present (${AGY_TOKEN_PATH})${NC}` : `${RED}✖ Missing. Run 'agy' to sign in.${NC}`}`);
 
-  // 2. Gateway Service
   const serviceActive = spawnSync('systemctl', ['--user', 'is-active', 'omniroute'], { encoding: 'utf-8' }).stdout?.trim() === 'active';
   console.log(`[2] OmniRoute User Daemon     : ${serviceActive ? `${GREEN}✔ active (systemd --user)${NC}` : `${YELLOW}⚠ inactive / not running${NC}`}`);
 
-  // 3. Local Endpoint Health
   const healthy = await checkHealth(2000);
   console.log(`[3] Gateway Health Endpoint  : ${healthy ? `${GREEN}✔ http://127.0.0.1:20128 (healthy)${NC}` : `${RED}✖ Unreachable${NC}`}`);
 
-  // 4. Claude Code CLI Version & Binary
   let claudeVersion = 'Unknown';
   let binaryStatus = `${RED}✖ Broken / Unlinked${NC}`;
   try {
@@ -156,15 +234,68 @@ async function runDoctor() {
   console.log(`[4] Claude Code CLI Version  : ${CYAN}${claudeVersion}${NC}`);
   console.log(`[5] Platform Native Binary   : ${binaryStatus}`);
 
-  // 5. Model Routing
-  console.log(`[6] Inference Architecture   : ${BOLD}Tier 1: Gemini 3.8 Flash High (Reasoning)${NC}`);
-  console.log(`                               ${BOLD}Tier 2: Claude Sonnet 4.6 (Fallback)${NC}`);
-  console.log(`                               ${BOLD}Tier 3: Gemini 3.1 Flash Lite (Circuit Breaker)${NC}`);
+  const cfg = loadConfig();
+  const current = resolveModel(cfg.defaultModel) || AGY_MODELS[0];
+  console.log(`[6] Active Cognitive Model   : ${BOLD}${CYAN}${current.name}${NC} (${current.id})`);
   console.log(`[7] Token Billing / Cost     : ${GREEN}Asymmetric Zero Marginal Cost ($0 / token)${NC}\n`);
 }
 
+async function handleModelCommand(targetArg) {
+  const cfg = loadConfig();
+  const currentId = cfg.defaultModel || 'gemini-3.8-flash-high';
+
+  if (targetArg) {
+    const matched = resolveModel(targetArg);
+    if (!matched) {
+      console.log(`\n${RED}[-] Unknown model alias: '${targetArg}'${NC}`);
+      console.log(`    Available aliases: flash, medium, low, sonnet, opus, gpt, auto\n`);
+      process.exit(1);
+    }
+    cfg.defaultModel = matched.id;
+    saveConfig(cfg);
+    console.log(`\n${GREEN}✔ Active Antigravity Model switched to:${NC} ${BOLD}${matched.name}${NC} (${matched.id})\n`);
+    return;
+  }
+
+  // Interactive Model Selector Menu
+  console.log(`\n${BOLD}${CYAN}====================================================================${NC}`);
+  console.log(`${BOLD}${CYAN}   cc-agy: Antigravity Model Switcher (TPU v5p Compute)             ${NC}`);
+  console.log(`${BOLD}${CYAN}====================================================================${NC}\n`);
+
+  AGY_MODELS.forEach((m, idx) => {
+    const isActive = m.id === currentId;
+    const marker = isActive ? `${GREEN}● [ACTIVE]${NC}` : ` `;
+    const num = `${BOLD}[${idx + 1}]${NC}`;
+    console.log(`  ${num} ${BOLD}${m.name.padEnd(28)}${NC} ${marker}`);
+    console.log(`      ${DIM}${m.description}${NC}`);
+    console.log(`      ${DIM}ID: ${m.id} | Aliases: ${m.aliases.join(', ')}${NC}\n`);
+  });
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  rl.question(`${BOLD}Select model [1-7] (or press Enter to keep current): ${NC}`, (answer) => {
+    rl.close();
+    const trimmed = answer.trim();
+    if (!trimmed) {
+      console.log(`${CYAN}Retaining current active model: ${currentId}${NC}\n`);
+      return;
+    }
+    const matched = resolveModel(trimmed);
+    if (matched) {
+      cfg.defaultModel = matched.id;
+      saveConfig(cfg);
+      console.log(`\n${GREEN}✔ Active Antigravity Model set to:${NC} ${BOLD}${matched.name}${NC} (${matched.id})\n`);
+    } else {
+      console.log(`\n${RED}[-] Invalid selection. Keeping ${currentId}.${NC}\n`);
+    }
+  });
+}
+
 async function main() {
-  const args = process.argv.slice(2);
+  const args = [...process.argv.slice(2)];
   const command = args[0];
 
   if (command === 'doctor' || command === 'status') {
@@ -185,21 +316,38 @@ async function main() {
     process.exit(ok ? 0 : 1);
   }
 
+  if (command === 'model' || command === 'models' || command === 'switch') {
+    await handleModelCommand(args[1]);
+    return;
+  }
+
   if (command === '--help' || command === '-h' || command === 'help') {
     console.log(`
-${BOLD}cc-agy${NC} - Claude Code + Google Antigravity (Gemini 3.8 Flash High) Gateway
+${BOLD}cc-agy${NC} - Claude Code + Google Antigravity (Gemini 3.8 Flash High & Claude on TPU)
 
 ${BOLD}USAGE:${NC}
   cc-agy [options] [claude-flags]   Launch Claude Code connected to Antigravity
+  cc-agy model [alias]               Switch default active model (or show interactive menu)
   cc-agy doctor                      Run full diagnostic telemetry & healthcheck
   cc-agy restart                     Restart local proxy daemon
   cc-agy setup                       Force re-run provisioning and database patches
 
+${BOLD}MODELS & ALIASES:${NC}
+  flash / high                       Gemini 3.8 Flash High (Deep Reasoning)
+  medium / med                       Gemini 3.8 Flash Medium
+  low                                Gemini 3.8 Flash Low (Sub-second)
+  sonnet                             Claude Sonnet 4.6 (Thinking on TPU)
+  opus                               Claude Opus 4.6 (Thinking on TPU)
+  gpt / oss                          GPT-OSS 120B (Medium)
+  auto                               Priority Cascade (High -> Sonnet -> Lite)
+
 ${BOLD}EXAMPLES:${NC}
-  cc-agy
+  cc-agy                             Launch with active model
+  cc-agy --model sonnet              Launch a session with Claude Sonnet 4.6
+  cc-agy --model opus                Launch a session with Claude Opus 4.6
+  cc-agy model                       Open interactive model switcher
+  cc-agy model sonnet                Set default model to Sonnet 4.6
   cc-agy --dangerously-skip-permissions
-  cc-agy -p "Review this file"
-  cc-agy doctor
 `);
     process.exit(0);
   }
@@ -223,18 +371,48 @@ ${BOLD}EXAMPLES:${NC}
   ensureNativeBinaryHealthy();
   await ensureDaemonRunning();
 
-  // Inject gateway environment variables
+  // Model resolution: check command-line --model / -m override, otherwise use saved default
+  const cfg = loadConfig();
+  let selectedModelId = cfg.defaultModel || 'gemini-3.8-flash-high';
+  let modelIndex = -1;
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--model' || args[i] === '-m') {
+      if (args[i + 1]) {
+        const resolved = resolveModel(args[i + 1]);
+        if (resolved) {
+          selectedModelId = resolved.id;
+        } else {
+          selectedModelId = args[i + 1];
+        }
+        modelIndex = i;
+      }
+      break;
+    }
+  }
+
+  // Strip custom --model/-m from args to pass cleaned model id to claude
+  const forwardArgs = [...args];
+  if (modelIndex !== -1) {
+    forwardArgs.splice(modelIndex, 2);
+  }
+  forwardArgs.unshift('--model', selectedModelId);
+
+  // Inject gateway environment variables & disable broken background autoupdate
   const apiKey = getLocalApiKey();
   const env = {
     ...process.env,
     ANTHROPIC_BASE_URL: 'http://localhost:20128',
     ANTHROPIC_AUTH_TOKEN: apiKey,
     ANTHROPIC_API_KEY: '',
+    ANTHROPIC_MODEL: selectedModelId,
     CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY: '1',
+    DISABLE_AUTOUPDATER: '1',
+    CLAUDE_CODE_AUTOUPDATER_DISABLED_BY_HOST: '1',
   };
 
   // Launch Claude Code transparently
-  const child = spawn('claude', args, {
+  const child = spawn('claude', forwardArgs, {
     stdio: 'inherit',
     env,
   });
