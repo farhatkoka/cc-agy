@@ -132,12 +132,16 @@ def patch_omniroute_db():
                 (json.dumps(all_combos), json.dumps(["admin", "manage", "read", "write"]), key_val)
             )
 
+        # 4. Deactivate non-Antigravity provider connections to eliminate gateway model discovery pollution
+        cur.execute("UPDATE provider_connections SET is_active = 0 WHERE provider != 'agy'")
+
         conn.commit()
         print("[+] OmniRoute SQLite database successfully patched:")
         print("    - 6 exact Antigravity models and aliases mapped")
         print("    - 'claude-auto' cascade configured (Gemini 3.8 Flash High -> Sonnet 4.6 -> Flash Lite)")
         print("    - 'compatFilterFailOpen' enabled across all combos")
         print("    - Local API key permissions synchronized")
+        print("    - Non-Antigravity discovery providers deactivated")
         return True
 
     except Exception as e:
