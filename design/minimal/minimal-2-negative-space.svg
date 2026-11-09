@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="m2Amber" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#FBBF24" />
+    </linearGradient>
+
+    <linearGradient id="m2Cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <filter id="m2Glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" opacity="0.25" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- PURE TRANSPARENT BACKGROUND -->
+
+  <!-- Precision Minimal Negative-Space Geometry -->
+  <g transform="translate(256, 256) scale(1.6) translate(-248, -256)" filter="url(#m2Glow)">
+    <!-- Claude Code Prompt Chevron (Precision Chamfered) -->
+    <path d="M 144 176 
+             L 232 256 
+             L 144 336 
+             L 176 364 
+             L 294 256 
+             L 176 148 Z" 
+          fill="url(#m2Amber)" />
+
+    <!-- Antigravity Node (Offset with 14px Optical Negative Space Slit) -->
+    <polygon points="274,256 352,184 352,328" 
+             fill="url(#m2Cyan)" />
+  </g>
+</svg>

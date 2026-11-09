@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Claude Code Amber / Terracotta Gradient -->
+    <linearGradient id="claudeAmber" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+
+    <!-- Antigravity TPU Cyan Gradient -->
+    <linearGradient id="agyCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <!-- Subtle Premium Glow -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" opacity="0.3" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- PURE TRANSPARENT BACKGROUND -->
+
+  <!-- Perfectly Centered Scaled Encircled Mark -->
+  <g transform="translate(256, 256) scale(1.6) translate(-248, -256)" filter="url(#softGlow)">
+    <!-- Claude Code CLI Prompt Chevron -->
+    <path d="M 148 180 
+             L 236 256 
+             L 148 332 
+             L 180 360 
+             L 296 256 
+             L 180 152 Z" 
+          fill="url(#claudeAmber)" />
+
+    <!-- Antigravity Acceleration Node -->
+    <polygon points="268,256 348,188 348,324" 
+             fill="url(#agyCyan)" />
+
+    <!-- Center Zero-Cost Nexus Flare -->
+    <circle cx="256" cy="256" r="10" fill="#FFFFFF" />
+  </g>
+</svg>

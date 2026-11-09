@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Claude Code Amber / Terracotta Gradient -->
+    <linearGradient id="claudeAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+
+    <!-- Antigravity TPU Cyan / Emerald Gradient -->
+    <linearGradient id="agyCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="50%" stop-color="#0EA5E9" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+
+    <!-- Core Bridge Gateway Gradient -->
+    <linearGradient id="bridgeGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#00F0FF" />
+    </linearGradient>
+
+    <!-- Subtle Ambient Bloom -->
+    <filter id="bloom" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" opacity="0.35" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- PURE TRANSPARENT BACKGROUND (No squircle / no box) -->
+
+  <!-- Group Centered Glyph -->
+  <g id="conduit-mark" filter="url(#bloom)">
+    <!-- 1. Left Claude Terminal Chevron (CLI Agent Loop) -->
+    <path d="M 112 144 
+             L 216 256 
+             L 112 368 
+             L 156 408 
+             L 296 256 
+             L 156 104 Z" 
+          fill="url(#claudeAmber)" />
+
+    <!-- 2. Right Antigravity Acceleration Vector (TPU Compute Apex) -->
+    <path d="M 396 144 
+             L 296 256 
+             L 396 368 
+             L 352 408 
+             L 216 256 
+             L 352 104 Z" 
+          fill="url(#agyCyan)" 
+          opacity="0.95" />
+
+    <!-- 3. Interlocking Asymmetric Gateway Bridge (The 0-Cost Multiplexer Core) -->
+    <polygon points="256,188 296,256 256,324 216,256" 
+             fill="url(#bridgeGrad)" 
+             stroke="#FFFFFF" 
+             stroke-width="3" 
+             stroke-opacity="0.7" />
+  </g>
+</svg>

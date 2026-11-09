@@ -1,52 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <title>cc-agy Logo</title>
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0F172A" />
-      <stop offset="100%" stop-color="#020617" />
+    <!-- Claude Code Amber / Terracotta Gradient -->
+    <linearGradient id="claudeAmber" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#F59E0B" />
     </linearGradient>
 
-    <!-- Structural Delta Gradient -->
-    <linearGradient id="deltaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" />
-      <stop offset="100%" stop-color="#CBD5E1" />
+    <!-- Antigravity TPU Cyan Gradient -->
+    <linearGradient id="agyCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#0284C7" />
     </linearGradient>
 
-    <!-- Forward Agent Vector Gradient -->
-    <linearGradient id="agentVector" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#F59E0B" />
-      <stop offset="100%" stop-color="#38BDF8" />
-    </linearGradient>
-
-    <!-- Vector Glow -->
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="10" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    <!-- Subtle Premium Glow -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" opacity="0.3" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
     </filter>
   </defs>
 
-  <!-- Container Squircle Tile -->
-  <rect x="16" y="16" width="480" height="480" rx="110" fill="url(#bgGrad)" stroke="#1E293B" stroke-width="4" />
-  <rect x="24" y="24" width="464" height="464" rx="102" fill="none" stroke="#334155" stroke-width="1.5" stroke-opacity="0.5" />
+  <!-- PURE TRANSPARENT BACKGROUND -->
 
-  <!-- Centered Scaled Concept C Delta Mark -->
-  <g transform="translate(64, 40) scale(1.5)">
-    <!-- Equilateral 60-degree Antigravity Apex -->
-    <path d="M 128 45.72 L 224 212 L 176 212 L 128 128.86 L 80 212 L 32 212 Z
-             M 128 85 L 152 126.57 L 104 126.57 Z" 
-          fill="url(#deltaGrad)" fill-rule="evenodd" />
-    <!-- Dynamic Forward Agent Vector -->
-    <polygon points="108,180 156,180 172,164 156,148 108,148 124,164" 
-             fill="url(#agentVector)" filter="url(#glow)" />
+  <!-- Perfectly Centered Scaled Encircled Mark -->
+  <g transform="translate(256, 256) scale(1.6) translate(-248, -256)" filter="url(#softGlow)">
+    <!-- Claude Code CLI Prompt Chevron -->
+    <path d="M 148 180 
+             L 236 256 
+             L 148 332 
+             L 180 360 
+             L 296 256 
+             L 180 152 Z" 
+          fill="url(#claudeAmber)" />
+
+    <!-- Antigravity Acceleration Node -->
+    <polygon points="268,256 348,188 348,324" 
+             fill="url(#agyCyan)" />
+
+    <!-- Center Zero-Cost Nexus Flare -->
+    <circle cx="256" cy="256" r="10" fill="#FFFFFF" />
   </g>
-
-  <!-- Monospace Wordmark Label -->
-  <text x="256" y="440" 
-        text-anchor="middle" 
-        fill="#64748B" 
-        font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" 
-        font-size="22" 
-        font-weight="700" 
-        letter-spacing="6">CC-AGY GATEWAY</text>
 </svg>

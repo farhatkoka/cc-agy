@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 240" width="100%" height="100%">
+  <defs>
+    <!-- Background Card Gradient -->
+    <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F19" />
+      <stop offset="100%" stop-color="#030712" />
+    </linearGradient>
+
+    <!-- Wordmark Gradients -->
+    <linearGradient id="brandAmber" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#FBBF24" />
+    </linearGradient>
+    <linearGradient id="brandCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+
+    <!-- Node Glow -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" opacity="0.4" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Dot Grid Pattern -->
+    <pattern id="dotGrid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#1E293B" opacity="0.4" />
+    </pattern>
+  </defs>
+
+  <!-- Container Box with Glassmorphism Border -->
+  <rect width="900" height="240" rx="16" fill="url(#cardBg)" />
+  <rect width="900" height="240" rx="16" fill="url(#dotGrid)" />
+  <rect x="1" y="1" width="898" height="238" rx="15" fill="none" stroke="#1E293B" stroke-width="1.5" />
+
+  <!-- LEFT: Typographic Identity & Telemetry -->
+  <g transform="translate(48, 44)">
+    <!-- Terminal Breadcrumb -->
+    <g transform="translate(0, 0)">
+      <text font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="600" fill="#64748B" letter-spacing="1.5">
+        <tspan fill="#F59E0B">~/projects</tspan> / <tspan fill="#94A3B8">cc-agy</tspan> <tspan fill="#38BDF8">⇋ gateway</tspan>
+      </text>
+    </g>
+
+    <!-- Main Wordmark -->
+    <g transform="translate(0, 48)">
+      <!-- cc (Claude Code) -->
+      <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="44" font-weight="900" fill="url(#brandAmber)" letter-spacing="-1">cc</text>
+      <!-- Separator -->
+      <text x="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="44" font-weight="300" fill="#475569">-</text>
+      <!-- agy (Antigravity) -->
+      <text x="80" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="44" font-weight="900" fill="url(#brandCyan)" letter-spacing="-1">agy</text>
+      <!-- Sub-label -->
+      <text x="180" y="-8" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="700" fill="#10B981" letter-spacing="2">v1.0.0</text>
+    </g>
+
+    <!-- Subtitle Definition -->
+    <text y="88" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="400" fill="#94A3B8">
+      Decoupled compute bridge: Anthropic Claude Code <tspan fill="#64748B">→</tspan> Google Cloud TPU v5p
+    </text>
+
+    <!-- Status Pill Badges -->
+    <g transform="translate(0, 118)">
+      <!-- Badge 1: Reasoning Engine -->
+      <rect x="0" y="0" width="186" height="26" rx="6" fill="#0F172A" stroke="#1E293B" stroke-width="1" />
+      <circle cx="12" cy="13" r="3.5" fill="#38BDF8" />
+      <text x="24" y="17" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11" font-weight="600" fill="#CBD5E1">Gemini 3.8 Flash High</text>
+
+      <!-- Badge 2: Cost Arbitrage -->
+      <rect x="194" y="0" width="132" height="26" rx="6" fill="#0F172A" stroke="#1E293B" stroke-width="1" />
+      <circle cx="206" cy="13" r="3.5" fill="#10B981" />
+      <text x="218" y="17" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11" font-weight="600" fill="#CBD5E1">$0 / Zero Marginal</text>
+
+      <!-- Badge 3: Daemon Supervised -->
+      <rect x="334" y="0" width="124" height="26" rx="6" fill="#0F172A" stroke="#1E293B" stroke-width="1" />
+      <circle cx="346" cy="13" r="3.5" fill="#F59E0B" />
+      <text x="358" y="17" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11" font-weight="600" fill="#CBD5E1">systemd :20128</text>
+    </g>
+  </g>
+
+  <!-- RIGHT: Architectural Flow Matrix Graphic -->
+  <g transform="translate(600, 36)" filter="url(#softGlow)">
+    <!-- Circuit Connection Track -->
+    <line x1="40" y1="84" x2="220" y2="84" stroke="#1E293B" stroke-width="2" stroke-dasharray="4 4" />
+    <line x1="90" y1="84" x2="170" y2="84" stroke="#00F0FF" stroke-width="2" opacity="0.8" />
+
+    <!-- Left Node: Claude Code CLI Prompt -->
+    <g transform="translate(10, 52)">
+      <rect width="64" height="64" rx="14" fill="#0F172A" stroke="#F59E0B" stroke-width="1.5" />
+      <text x="32" y="40" text-anchor="middle" font-family="ui-monospace, monospace" font-size="24" font-weight="800" fill="#F59E0B">&gt;_</text>
+      <text x="32" y="78" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9" font-weight="600" fill="#64748B">CLAUDE</text>
+    </g>
+
+    <!-- Center Node: Gateway Nexus / Multiplexer -->
+    <g transform="translate(106, 56)">
+      <polygon points="28,4 52,28 28,52 4,28" fill="#0F172A" stroke="#38BDF8" stroke-width="2" />
+      <circle cx="28" cy="28" r="7" fill="#00F0FF" />
+      <text x="28" y="74" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9" font-weight="700" fill="#38BDF8">BRIDGE</text>
+    </g>
+
+    <!-- Right Node: Google Antigravity TPU Node -->
+    <g transform="translate(186, 52)">
+      <rect width="64" height="64" rx="14" fill="#0F172A" stroke="#10B981" stroke-width="1.5" />
+      <!-- TPU Tensor Grid Icon -->
+      <g transform="translate(18, 18)" fill="#10B981">
+        <rect x="0" y="0" width="12" height="12" rx="2" opacity="0.9"/>
+        <rect x="16" y="0" width="12" height="12" rx="2" opacity="0.6"/>
+        <rect x="0" y="16" width="12" height="12" rx="2" opacity="0.6"/>
+        <rect x="16" y="16" width="12" height="12" rx="2" opacity="0.9"/>
+      </g>
+      <text x="32" y="78" text-anchor="middle" font-family="ui-monospace, monospace" font-size="9" font-weight="600" fill="#64748B">TPU v5p</text>
+    </g>
+  </g>
+</svg>
